@@ -4,8 +4,10 @@ from ..schemas import ProjectRead, ProjectCreate
 
 # -------------------------------- Temporary --------------------------------
 fake_db = [
-    {"id": 1, "name": "Website Redesign", "description": "Revamp landing page"},
-    {"id": 2, "name": "Mobile App", "description": "iOS and Android client app"},
+    {"id": 1, "name": "Website Redesign", "description": "Revamp landing page",
+     "internal_note": "client is unhappy with the budget"},
+    {"id": 2, "name": "Mobile App", "description": "iOS and Android client app",
+     "internal_note": "waiting on design assets"},
     {"id": 3, "name": "Database Migration", "description": "Move from MySQL to PostgreSQL"},
     {"id": 4, "name": "API Authentication", "description": "Implement OAuth2 login flow"},
     {"id": 5, "name": "CI/CD Pipeline", "description": "Set up GitHub Actions for auto-deploy"},
@@ -54,7 +56,7 @@ def get_project_or_404(project_id: int) -> ProjectRead:
     return project
 
 @router.get("/{project_id}")
-def get_project_by_id(project: Annotated[dict, Depends(get_project_or_404)]):
+def get_project_by_id(project: Annotated[dict, Depends(get_project_or_404)]) -> ProjectRead:
     return project
 
     
