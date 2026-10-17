@@ -1,15 +1,6 @@
-from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, status, Depends
 from typing import Annotated
-
-class ProjectCreate(BaseModel):
-    name: str
-    description: str = ''
-    
-class ProjectRead(BaseModel):
-    id: int
-    name: str
-    description: str
+from ..schemas import ProjectRead, ProjectCreate
 
 # -------------------------------- Temporary --------------------------------
 fake_db = [
