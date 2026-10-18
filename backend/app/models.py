@@ -1,4 +1,5 @@
 from sqlmodel import SQLModel, Field, Relationship
+from datetime import date
 
 class Users(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -18,6 +19,7 @@ class Tasks(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     title: str
     description: str
+    due_date: date | None = None
     status: str = Field(default="todo")
     project_id: int | None = Field(default=None, foreign_key="projects.id")
     project: Projects | None = Relationship(back_populates="tasks")
