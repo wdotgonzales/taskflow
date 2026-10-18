@@ -15,7 +15,7 @@ if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL environment variable is missing!")
 
 # Build the engine from your DATABASE_URL
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(DATABASE_URL, echo=False)
 
 #nCreate the get_session generator function using yield
 def get_session():
