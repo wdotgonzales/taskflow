@@ -1,31 +1,9 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from typing import Annotated
 from ..schemas import ProjectRead, ProjectCreate
-
-# -------------------------------- Temporary --------------------------------
-fake_db = [
-    {"id": 1, "name": "Website Redesign", "description": "Revamp landing page",
-     "internal_note": "client is unhappy with the budget"},
-    {"id": 2, "name": "Mobile App", "description": "iOS and Android client app",
-     "internal_note": "waiting on design assets"},
-    {"id": 3, "name": "Database Migration", "description": "Move from MySQL to PostgreSQL"},
-    {"id": 4, "name": "API Authentication", "description": "Implement OAuth2 login flow"},
-    {"id": 5, "name": "CI/CD Pipeline", "description": "Set up GitHub Actions for auto-deploy"},
-    {"id": 6, "name": "User Analytics", "description": "Integrate Mixpanel tracking"},
-    {"id": 7, "name": "Payment Gateway", "description": "Integrate Stripe checkout"},
-    {"id": 8, "name": "Email Notifications", "description": "Send transactional emails via SendGrid"},
-    {"id": 9, "name": "Admin Dashboard", "description": "Build internal metrics reporting tool"},
-    {"id": 10, "name": "Security Audit", "description": "Perform vulnerability scanning and penetration test"}
-]
-
-def lookup_get_project_by_id(item_id, db=fake_db):
-    return next((item for item in db if item["id"] == item_id), None)
-
-def filter_by_name_keyword(keyword, db=fake_db):
-    keyword_lower = keyword.lower()
-    return [item for item in db if keyword_lower in item["name"].lower()]
-# -------------------------------- End of Temporary --------------------------------
-
+from sqlmodel import select
+from ..database import SessionDep
+from ..models import Projects
     
 router = APIRouter(
     prefix="/projects",
@@ -33,21 +11,24 @@ router = APIRouter(
 )
 
 @router.post("/", status_code=201)
-def create_project(project: ProjectCreate) -> ProjectRead:
-    new_id = len(fake_db) + 1
-    project_data = {"id": new_id, **project.model_dump()}
-    fake_db.append(project_data)
-    return lookup_get_project_by_id(project_data['id'])
+def create_project(session: SessionDep, project: ProjectCreate) -> ProjectRead:
+    db_project = Projects.model_validate(project, update={"owner_id": 1}) # owner_id is temporary for now
+    session.add(db_project)
+    session.commit()
+    session.refresh(db_project)
+    return db_project
 
 @router.get("/")
-def get_projects(q: str = '') -> list[ProjectRead]:
-    if q:
-        return filter_by_name_keyword(q)
+def get_projects(session: SessionDep, q: str = '') -> list[ProjectRead]:
+    statement = select(Projects)
     
-    return fake_db
+    if q:
+        statement = statement.where(Projects.name.ilike(f"%{q}%"))
+    
+    return session.exec(statement).all()
 
-def get_project_or_404(project_id: int) -> ProjectRead:
-    project = lookup_get_project_by_id(project_id)
+def get_project_or_404(project_id: int, session: SessionDep):
+    project = session.get(Projects, project_id)
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
